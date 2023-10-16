@@ -5,7 +5,7 @@ var osc = require("osc");
 var localIps = [];
 
 // set your socket url here
-var socketUrl = "ws://localhost:6006";
+var socketUrl = "ws://localhost:7007";
 
 
 // check local ip
@@ -29,14 +29,7 @@ for (var key in net_int) {
   
 
 
-var udpPort = new osc.UDPPort({
-    localAddress: "0.0.0.0",
-    remoteAddress: "255.255.255.255",
-    localPort: 3000,
-    remotePort: 3000,
-    broadcast: true,
-    metadata: true
-});
+
 
 var ws = 0;
 var timer = 0;

@@ -2,7 +2,7 @@ const WebSocket = require('ws');
 const express = require('express');
 
 
-const port = process.env.PORT || 6006
+const port = process.env.PORT || 7007
 
 
 var incomingDataLog = [];
@@ -14,7 +14,7 @@ var styleSheet = "<style>body{font-family: monospace; font-size: 24px;}</style>"
 
 
 const server = express()
-  .use(express.static('public'))
+  .use(express.static('../frontend/'))
   .get('/', (req, res) => {
   
     res.setHeader('Content-Type', 'text/html');
@@ -41,35 +41,35 @@ const wss = new WebSocket.Server({ server })
 
 wss.on('connection', function connection(ws,req) {
 
-
+  console.log("new connection from " + req.connection.remoteAddress);
   // get the real ip from the proxy
-  ws.realip = req.headers["x-real-ip"];
+  ws.realip = 1;
 
   ws.on('error', console.error);
 
-  ws.on('message', function message(data, isBinary,req) {
+  ws.on('message', function message(data, isBinary) {
 
-    var adress =  ws.realip;
+    var adress =  1;//ws.realip;
+    console.log("message from " + adress + " : " + data);
+    // var foundClient = false;
+    // for(var i = 0; i < incomingDataLog.length; i++){
+    //   if(incomingDataLog[i].key == adress){
+    //     incomingDataLog[i].data++;
+    //     foundClient = true;
+    //     continue;
+    //   }
+    // }
 
-    var foundClient = false;
-    for(var i = 0; i < incomingDataLog.length; i++){
-      if(incomingDataLog[i].key == adress){
-        incomingDataLog[i].data++;
-        foundClient = true;
-        continue;
-      }
-    }
-
-    if(!foundClient){
-      incomingDataLog.push({key: adress, data: 1});
-    }
+    // if(!foundClient){
+    //   incomingDataLog.push({key: adress, data: 1});
+    // }
 
 
     wss.clients.forEach(function each(client) {
-      if (client !== ws && client.readyState === WebSocket.OPEN) {
-        client.send(data, { binary: isBinary });
-      }else{
-      }
+     // if (client !== ws && client.readyState === WebSocket.OPEN) {
+        client.send(data,false);
+     // }else{
+     // }
     });
   });
 });
