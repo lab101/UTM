@@ -3,7 +3,10 @@
 
 var websocket = 0;
 var timer = 0;
-var socketUrl = "ws://localhost:7007";
+var socketUrl = "ws://utm.lab101.be";
+
+
+var users = [];
 
 function tryConnect(){
 
@@ -40,30 +43,36 @@ function tryConnect(){
     }, 5000);
 }
 
+
+function processMessage(txt){
+    var incomingData = JSON.parse(txt);
+    
+    // check if user exists if yes update ohterwise create new
+    var found = false;
+    for(var i = 0; i < users.length; i++){
+        if(users[i].id == incomingData.id){
+            users[i].updateData(incomingData.x,incomingData.y);
+            found = true;
+            break;
+        }
+    }
+    if(!found){
+        users.push(new User(incomingData.id,incomingData.x,incomingData.y));
+    }
+
+}
+
 function setupCallbacks(){
 
     websocket.onmessage = (event) => {
-        console.log(event.data);
+       // event.data.text().then(txt => processMessage(txt));   
+       processMessage(event.data)
     }
 
-
-    console.log("setup callbacks");
-    websocket.on('error', console.error);
-
-    websocket.on('open', function open() {
-        console.log("websocket open!");
-    });
-    
-    websocket.on('close', function close() {
+    websocket.onclose = (event) => {
         console.log("websocket closed!");
         if(timer==0) tryConnect();
-    });
-    
-    websocket.on('message', function message(data) {
-    
-       console.log("message from server: " + data);
-    
-    });
+    }
 }
 
 
@@ -90,10 +99,26 @@ function draw(){
     if(mouseIsPressed){
         radius = 120;
         //console.log(ws);
-        if(websocket) websocket.send(mouseX + "," + mouseY);
+
+
+        if(websocket){
+            var mouseCoords = {x: mouseX, y: mouseY};
+            websocket.send(JSON.stringify(mouseCoords),false);
+        }
+        // websocket.send('{"x":' + mouseX + ',"y":' + mouseY + '}',false);
     } 
     strokeWeight(weight);
     circle(mouseX, mouseY, radius);
+
+
+    for(var i = 0; i < users.length; i++){
+        var time = users[i].getTimeDiv();
+        var radius = 100 - time/100;
+        if(radius < 0) radius = 10;
+        circle(users[i].x, users[i].y, radius);
+    }
+
+
 }   
 
 function windowResized() {
