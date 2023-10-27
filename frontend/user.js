@@ -12,6 +12,10 @@ class User {
         this.lastUpdate = Date.now();
     }
     
+    isActive(){
+        return Date.now() - this.lastUpdate < 20;
+    }
+
     getTimeDiv(){
         return Date.now() - this.lastUpdate;
     }

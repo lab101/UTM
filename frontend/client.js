@@ -1,127 +1,104 @@
 
 
-
 var websocket = 0;
 var timer = 0;
+
 var socketUrl = "ws://utm.lab101.be";
+var websocketmanager = new WebSocketManager(socketUrl);
+// particle array
+var particles = [];
 
-
-var users = [];
-
-function tryConnect(){
-
-
-    if(websocket!=0 && websocket.readyState == WebSocket.OPEN){
-        // connection is good
-        console.log("connection is good not trying to reconnect");
-        timer = 0;
-
-        return;
-    }
-
-    try{
-        console.log("trying to connect to websocket");
-
-        websocket = 0;
-       
-        websocket = new WebSocket(socketUrl);
-        setupCallbacks();
-
-
-        // ws.on('error', function error(msg){
-        //     console.log('\x1b[31m%s\x1b[0m', msg)
-        // } );
-
-
-    }catch(error){
-
-    }
-
-
-    timer = setTimeout(() => {
-        tryConnect();
-    }, 5000);
-}
-
-
-function processMessage(txt){
-    var incomingData = JSON.parse(txt);
-    
-    // check if user exists if yes update ohterwise create new
-    var found = false;
-    for(var i = 0; i < users.length; i++){
-        if(users[i].id == incomingData.id){
-            users[i].updateData(incomingData.x,incomingData.y);
-            found = true;
-            break;
-        }
-    }
-    if(!found){
-        users.push(new User(incomingData.id,incomingData.x,incomingData.y));
-    }
-
-}
-
-function setupCallbacks(){
-
-    websocket.onmessage = (event) => {
-       // event.data.text().then(txt => processMessage(txt));   
-       processMessage(event.data)
-    }
-
-    websocket.onclose = (event) => {
-        console.log("websocket closed!");
-        if(timer==0) tryConnect();
-    }
-}
-
-
-
-function setup(){
+function setup() {
 
     // get the canvas by its id
     var canvas = document.getElementById("canvas");
-    createCanvas(canvas.clientWidth, canvas.clientHeight,canvas);
+    createCanvas(canvas.clientWidth, canvas.clientHeight, canvas);
     background(0);
-    noStroke();
-    tryConnect();
 }
 
-function draw(){
+function draw() {
     background(0);
 
-    fill(255,255,255,10);
-
-    var radius = 100 + Math.sin(frameCount/10)*10;
-    stroke(255,255,255);
-
-    var weight = mouseIsPressed ? 10 : 1;
-    if(mouseIsPressed){
+    // own circle
+    if (mouseIsPressed) {
         radius = 120;
-        //console.log(ws);
+        websocketmanager.send(mouseX / innerWidth, mouseY / innerHeight)
+        stroke(255, 0, 0);
+        strokeWeight(4);
+        circle(mouseX, mouseY, radius);
 
-
-        if(websocket){
-            var mouseCoords = {x: mouseX, y: mouseY};
-            websocket.send(JSON.stringify(mouseCoords),false);
-        }
-        // websocket.send('{"x":' + mouseX + ',"y":' + mouseY + '}',false);
-    } 
-    strokeWeight(weight);
-    circle(mouseX, mouseY, radius);
-
-
-    for(var i = 0; i < users.length; i++){
-        var time = users[i].getTimeDiv();
-        var radius = 100 - time/100;
-        if(radius < 0) radius = 10;
-        circle(users[i].x, users[i].y, radius);
     }
 
+    // other circles    
+    for (var i = 0; i < websocketmanager.users.length; i++) {
+        var user = websocketmanager.users[i];
+        var time = user.getTimeDiv();
+        var radius = 100 - time / 100;
+        if (radius < 0) radius = 10;
 
-}   
+        var screenX = innerWidth * user.x;
+        var screenY = innerHeight * user.y;
+
+        colorMode(HSB, 100);
+        var id = user.id;
+        var hue = (id * 2) % 100;
+
+        
+        noFill();
+        stroke(hue,20,100);
+
+        if(user.isActive()){
+            //fill(100);
+            strokeWeight(10);            
+            pushParticles(screenX,screenY);
+        }
+           
+        strokeWeight(4);
+
+        circle(screenX,screenY, radius);
+    }
+
+    for(var i = 0; i < particles.length; i++){
+      //  console.log(particles[i]);
+        particles[i].update();
+        strokeWeight(1);
+        noStroke();
+        fill(100,0,100,particles[i].lifeTime/400*100);
+        circle(particles[i].x,particles[i].y,4);
+    }
+    noFill();
+
+    //remove dead particles
+    for(var i = 0; i < particles.length; i++){
+        if(!particles[i].isAlive()){
+            particles.splice(i,1);
+            i--;
+        }
+    }
+
+    // write text that prints hallo in a loop
+    
+
+
+}
+
+
+function pushParticles(x,y){
+   // console.log("push particles");
+    var rndX = random(-1,1);
+    var rndY = random(-1,1);
+    var direction = createVector(rndX,rndY);
+
+    x += direction.x*60;
+    y += direction.y*60;
+
+    // normalize the direction vector
+    direction.normalize();
+    particles.push(new Particle(x,y,direction));
+}
+
 
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
 
-  }
+}

@@ -25,7 +25,7 @@ const server = express()
 
       var summrize = "<h2>active websockets:</h2>";
       for (let client of wss.clients) {
-          summrize += client.id + "<br/>";
+          summrize += "id: " + client.id + "<br/>";
       }
       // summrize += "<br/><h2>incoming data:</h2>";
       // for(var i = 0; i < incomingDataLog.length; i++){
