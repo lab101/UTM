@@ -27,10 +27,6 @@ const server = express()
       for (let client of wss.clients) {
           summrize += "id: " + client.id + "<br/>";
       }
-      // summrize += "<br/><h2>incoming data:</h2>";
-      // for(var i = 0; i < incomingDataLog.length; i++){
-      //   summrize += "<strong>" + incomingDataLog[i].key + "</strong>  ------  " + incomingDataLog[i].data + "<br/>";
-      // }
       res.send(summrize  + reloadPage + styleSheet);
   })
 
@@ -60,18 +56,7 @@ wss.on('connection', function connection(ws,req) {
     data = JSON.stringify(data);
 
     console.log("message from " + ws.id + " : " + data);
-    // var foundClient = false;
-    // for(var i = 0; i < incomingDataLog.length; i++){
-    //   if(incomingDataLog[i].key == adress){
-    //     incomingDataLog[i].data++;
-    //     foundClient = true;
-    //     continue;
-    //   }
-    // }
-
-    // if(!foundClient){
-    //   incomingDataLog.push({key: adress, data: 1});
-    // }
+ 
 
 
     wss.clients.forEach(function each(client) {

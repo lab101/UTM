@@ -1,11 +1,12 @@
 class Particle{
-    constructor(x, y, direction){
+    constructor(x, y, direction,hue){
         this.x = x;
         this.y = y;
         this.direction = direction;
         // set a random lifetime
         this.lifeTime = random(10,400);
         this.speed = random(0.1,4);
+        this.hue = hue;
         //this.lifeTime = ;
     }
 
