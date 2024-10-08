@@ -3,10 +3,17 @@
 var websocket = 0;
 var timer = 0;
 
-var socketUrl = "wss://utm.lab101.be";
+var socketUrl = "wss://grid.lab101.be";
 var websocketmanager = new WebSocketManager(socketUrl);
 // particle array
 var particles = [];
+
+var gridImage;
+
+
+function preload() {
+    gridImage = loadImage('grid.png');
+}
 
 function setup() {
 
@@ -14,17 +21,30 @@ function setup() {
     var canvas = document.getElementById("canvas");
     createCanvas(canvas.clientWidth, canvas.clientHeight, canvas);
     background(0);
+
+   // gridImage.src = "/grid.png";
 }
 
 function draw() {
     background(0);
-
+// draw the grid image
+        if(gridImage){
+            fill(255);
+           // console.log("draw grid");
+            image(gridImage,0,0,innerWidth,innerHeight);
+        }
     // own circle
     if (mouseIsPressed) {
-        websocketmanager.send(mouseX / innerWidth, mouseY / innerHeight)
         stroke(255, 0, 255);
         strokeWeight(4);
-        circle(mouseX, mouseY, 20);
+        // snap to grid
+        var stepSizeX = innerWidth / 7;
+        var stepSizeY = innerHeight / 9;
+        var gridX = (Math.floor(mouseX / stepSizeX) +0.55)  * stepSizeX;
+        var gridY = (Math.floor(mouseY / stepSizeY) +0.6)  * stepSizeY;
+        circle(gridX, gridY, 20);
+        websocketmanager.send(gridX / innerWidth, gridY / innerHeight)
+
 
     }
 
@@ -55,6 +75,8 @@ function draw() {
         strokeWeight(4);
 
         circle(screenX,screenY, radius);
+
+        
     }
 
     for(var i = 0; i < particles.length; i++){
