@@ -12,9 +12,11 @@ class HitBox {
         this.innerY = 0;
         this.innerW = 0;
         this.innerH = 0;
-     
+        
+        this.lastActive = Date.now();
 
         this.counter = 0;
+        this.wave = 1;
     }
 
     setInner(){
@@ -42,6 +44,8 @@ var grids = [];
 var gridImage;
 
 
+let currentGridIndex = -1;
+let lastRender = Date.now();
 
 
 
@@ -103,16 +107,30 @@ window.addEventListener('resize', function(event){
 }
 
 function checkIfInGrid(x,y){
+    let gridIndex = -1;
     for(let i = 0; i < grids.length; i++){
         if(grids[i].contains(x,y)){
-            return i;
+            gridIndex = i;
+            break;
         }
     }
-    return -1;
+
+    if(gridIndex != -1 ){
+        if(grids[gridIndex].counter < 50){
+            grids[gridIndex].counter++;
+        }
+
+    }
+
+    return gridIndex;
 }
 
 function draw() {
     background(0);
+
+    let now = Date.now();
+    let delta = (now - lastRender)/1000;
+    lastRender = now;
 // draw the grid image
 
     // get parameters from the url
@@ -127,24 +145,22 @@ function draw() {
             image(gridImage,0,0,innerWidth,innerHeight);
         }
     }
+    currentGridIndex = -1;
     // own circle
     if (mouseIsPressed) {
-        stroke(255, 0, 255);
-        strokeWeight(4);
+        // stroke(255, 0, 255);
+        // strokeWeight(4);
         // snap to grid
         var stepSizeX = innerWidth / 7;
         var stepSizeY = innerHeight / 9;
         var gridX = (Math.floor(mouseX / stepSizeX) +0.55)  * stepSizeX;
         var gridY = (Math.floor(mouseY / stepSizeY) +0.6)  * stepSizeY;
-        circle(gridX, gridY, 20);
+     //   circle(gridX, gridY, 20);
         websocketmanager.send(gridX / innerWidth, gridY / innerHeight)
 
         var gridIndex = checkIfInGrid(gridX,gridY);
-        if(gridIndex != -1){
-            if(grids[gridIndex].counter < 20){
-                grids[gridIndex].counter++;
-            }
-        }
+        currentGridIndex = gridIndex;
+    
 
     }
 
@@ -163,20 +179,17 @@ function draw() {
         var screenY = innerHeight * user.y;
 
         var gridIndex = checkIfInGrid(screenX,screenY);
-        if(gridIndex != -1 ){
-            if(grids[gridIndex].counter < 20){
-                grids[gridIndex].counter++;
-            }
-
+        if(gridIndex != -1){
+            grids[gridIndex].lastActive = Date.now();
         }
-
-        colorMode(HSB, 100);
+        
+        //colorMode(HSB, 100);
         var id = user.id;
         var hue = (id * 20) % 100;
 
         
         noFill();
-        stroke(hue,60,100);
+        stroke(255,255,255);
 
         if(user.isActive()){
             //fill(100);
@@ -186,7 +199,7 @@ function draw() {
            
         strokeWeight(4);
 
-        circle(screenX,screenY, radius);
+       // circle(screenX,screenY, radius);
 
         
     }
@@ -200,52 +213,87 @@ function draw() {
         var saturation = map(lifetime,0,100,0,80);
         saturation = Math.min(saturation,80);
         var radius = map(lifetime,0,100,0,2);
-        radius = Math.min(radius,2);
+        radius = Math.min(radius,4);
 
         //fill(particles[i].hue,saturation,100,particles[i].lifeTime/400*100);
-        fill(255,0,255);
+        fill(255,255,255);
         circle(particles[i].x,particles[i].y,radius);
     }
     noFill();
 
     // draw the grid
     for(let i = 0; i < grids.length; i++){
-        stroke(255);
+        var grid = grids[i];
 
-        if(grids[i].counter > 0){
-           grids[i].counter-=0.02;
+         if(grid.wave != 0){
+        //     stroke(grid.wave*300);
+            noStroke();
+             fill(grid.wave*100);
+             rect(grid.x,grid.y,grid.w,grid.h);
+        //   //  fill(0);
         }
 
-        if(grids[i].counter > 0){
-            var grid = grids[i];
-            let w = map(grids[i].counter,0,40,1,15);
-            if(w > 15){
-                w = 15;
-            }
+        // stroke(255);
+
+        noFill();
+
+
+
+
+        if(grid.counter > 0){        
+           grid.counter-= (delta*6);
+        }else{
+            grid.counter = 0;
+        }
+
+            // draw text
+            strokeWeight(1);
+            stroke(244);
+          //  text(grid.counter,grid.x+grid.w/2,grid.y+grid.h/2);
+        
+          let waveCounter = (grid.counter);
+
+        if(grid.counter > 0){
+            let w = map(waveCounter,0,40,2,20);
+            w = constrain(w,2,20);
+
             strokeWeight(w);
     
-            let c = map(grids[i].counter,0,100,40,255);
+            let c = map(waveCounter,0,100,200,255);
+
             stroke(c);
+           // noStroke();
+
+            if(Date.now()-grid.lastActive < 10){            
+                stroke(255,255,0);
+                strokeWeight(8);
+            }
 
             rect(grid.innerX,grid.innerY,grid.innerW,grid.innerH);
 
+            // outer grid
             if(grid.counter > 10){
 
-                let w = map(grids[i].counter,0,30,0.5,2);
-                if(w > 2){
-                    w = 2;
-                }
+                let w = map(waveCounter,0,30,1,3);
+                w = constrain(w,1,3);
+
+               
                 strokeWeight(w);
-                let c = map(grids[i].counter,0,40,40,255);
+                let c = map(waveCounter,0,40,240,255);
+                
+                
                 stroke(c);
     
                 rect(grid.x,grid.y,grid.w,grid.h);
 
             }
-            // draw text
-            strokeWeight(1);
-           // text(grid.counter,grid.x+grid.w/2,grid.y+grid.h/2);
+           
         }
+
+      
+
+
+     
 
     }
 
@@ -257,10 +305,40 @@ function draw() {
         }
     }
 
-    // write text that prints hallo in a loop
-    
+
+    if(currentGridIndex != -1){
+        let grid = grids[currentGridIndex];
+        stroke(255,255,0);
+        strokeWeight(8);
+        rect(grid.x,grid.y,grid.w,grid.h);
+    }
+
+    wave()
+
+}
 
 
+function wave(){
+    let now = Date.now()-2000000;
+    for(let i = 0; i < grids.length; i++){
+
+        let grid = grids[i];
+
+        let waveX = Math.sin((grid.x)*0.004 + (now/500)) * 0.2;
+        let waveY = Math.sin((grid.y)*0.008 + (now/600)) * 0.2;
+
+        let wave = waveX + waveY;
+        //wave = Math.abs(wave);
+    //    console.log(wave);
+       //grid.wave  = Math.pow(wave,3);
+       grid.wave = wave;
+        // if(grid.counter>=0){
+        //     grid.counter *= Math.max(0.5,wave);
+        // }
+       // grid.counter += wave;
+       
+    }
+   // console.log(now/4000);
 }
 
 
